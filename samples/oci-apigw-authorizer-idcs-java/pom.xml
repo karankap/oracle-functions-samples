@@ -8,7 +8,7 @@
         <fdk.version>1.0.130</fdk.version>
     </properties>
     <groupId>com.example.fn</groupId>
-    <artifactId>hello</artifactId>
+    <artifactId>oci-apigw-authorizer-idcs-java</artifactId>
     <version>1.0.0</version>
 
     <dependencies>
