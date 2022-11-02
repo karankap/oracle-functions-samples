@@ -57,6 +57,20 @@ public class JWKUtil {
     return JWKSet.parse(jwk);
   } // getJWK;
 
+  public static JWKSet getJWK(final String accessToken, final String authURL) throws Exception {
+    String jwk = null;
+    //    String authURL = ResourceServerConfig.JWK_URL;
+    Response httpResponse;
+
+    // HEADERS
+    final Map<String, String> requestOptions = new HashMap<>();
+    requestOptions.put("Authorization", "Bearer " + accessToken);
+    httpResponse =
+        doHttpRequest(authURL + ResourceServerConfig.JWK_URL, "GET", null, requestOptions);
+    jwk = httpResponse.getResponseBodyAsString("UTF-8");
+    return JWKSet.parse(jwk);
+  } // getJWK;
+
   /**
    * Gets an Access token for application using the client_credentials flow
    *
