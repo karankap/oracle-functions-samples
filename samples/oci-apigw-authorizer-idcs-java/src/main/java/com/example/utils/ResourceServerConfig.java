@@ -19,7 +19,7 @@ public class ResourceServerConfig {
       "https://idcs-c19bfd1381b34052943e54d02014b5fc.identity.oraclecloud.com";
 
   // INFORMATION ABOUT THE TARGET APPLICATION
-  public static final String SCOPE_AUD = "10.0.1.71:9999";
+  public static final String SCOPE_AUD = "https://luldljodckrrqg6jiplllszpbi.apigateway.us-phoenix-1.oci.customer-oci.com";
 
   // TEST CLIENT CREDENTIALS
   public static final String TEST_CLIENT_ID = "";

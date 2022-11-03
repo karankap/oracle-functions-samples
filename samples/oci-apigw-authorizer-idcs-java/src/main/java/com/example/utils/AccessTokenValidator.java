@@ -30,35 +30,35 @@ public class AccessTokenValidator {
 
   private static final ConfigurableJWTProcessor JWT_PROCESSOR = new DefaultJWTProcessor();
   private static final Map<String, JWKSet> TENANT_PUBLIC_KEY_CACHE = new ConcurrentHashMap<>();
-//  private static JWKSet jwk;
-//  private static boolean isSafe = false;
-//  private static JWKSource keySource;
-//  private static JWSKeySelector keySelector;
+  //  private static JWKSet jwk;
+  //  private static boolean isSafe = false;
+  //  private static JWKSource keySource;
+  //  private static JWSKeySelector keySelector;
 
-//  public void init() {
-//    if (!AccessTokenValidator.isSafe) {
-//      try {
-//        jwk = JWKUtil.getJWK();
-//        keySource = new ImmutableJWKSet(jwk);
-//        keySelector = new JWSVerificationKeySelector(JWSAlgorithm.RS256, keySource);
-//        JWT_PROCESSOR.setJWSKeySelector(keySelector);
-//        AccessTokenValidator.isSafe = true;
-//        Logger.getLogger(AccessTokenValidator.class.getName())
-//            .log(Level.INFO, "Signing Key from IDCS successfully loaded!");
-//      } catch (Exception ex) {
-//        Logger.getLogger(AccessTokenValidator.class.getName())
-//            .log(Level.SEVERE, "Error loading Signing Key from IDCS", ex);
-//        AccessTokenValidator.isSafe = false;
-//      }
-//    }
-//  }
+  //  public void init() {
+  //    if (!AccessTokenValidator.isSafe) {
+  //      try {
+  //        jwk = JWKUtil.getJWK();
+  //        keySource = new ImmutableJWKSet(jwk);
+  //        keySelector = new JWSVerificationKeySelector(JWSAlgorithm.RS256, keySource);
+  //        JWT_PROCESSOR.setJWSKeySelector(keySelector);
+  //        AccessTokenValidator.isSafe = true;
+  //        Logger.getLogger(AccessTokenValidator.class.getName())
+  //            .log(Level.INFO, "Signing Key from IDCS successfully loaded!");
+  //      } catch (Exception ex) {
+  //        Logger.getLogger(AccessTokenValidator.class.getName())
+  //            .log(Level.SEVERE, "Error loading Signing Key from IDCS", ex);
+  //        AccessTokenValidator.isSafe = false;
+  //      }
+  //    }
+  //  }
 
   // checks if the token is valid
   public JWTClaimsSet validate(final String accessToken) {
     SignedJWT signedJWT = null;
     try {
       signedJWT = SignedJWT.parse(accessToken);
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
       throw new InvalidTokenException(e.getMessage());
     }
@@ -71,17 +71,27 @@ public class AccessTokenValidator {
 
     JWKSet jwkSet = TENANT_PUBLIC_KEY_CACHE.get(tenant.toLowerCase());
     if (jwkSet == null) {
-      System.out.println("JWKSet is empty");
+      System.out.println(
+          "Cache miss for tenant "
+              + tenant
+              + ", Cache size currently is "
+              + TENANT_PUBLIC_KEY_CACHE.size());
 
       try {
         final String JWKSURL = getClaimFromToken(signedJWT, "tenant_iss");
         jwkSet = JWKUtil.getJWK(accessToken, JWKSURL);
         TENANT_PUBLIC_KEY_CACHE.put(tenant.toLowerCase(), jwkSet);
-        System.out.println("JWKSet added to Cache");
+        System.out.println("Cache updated for tenant " + tenant);
       } catch (Exception e) {
         e.printStackTrace();
-        // TODO: throw exception
+        throw new JWKSLoadException(e.getMessage());
       }
+    } else {
+      System.out.println(
+          "JWKSet found in cache for tenant "
+              + tenant
+              + ", Cache size currently is "
+              + TENANT_PUBLIC_KEY_CACHE.size());
     }
 
     if (jwkSet != null) {
@@ -92,7 +102,7 @@ public class AccessTokenValidator {
   }
 
   private String getClaimFromToken(final SignedJWT signedJWT, final String claimName) {
-    String tenant = null;
+    String claimValue = null;
     Map<String, Object> claims = null;
 
     try {
@@ -103,16 +113,17 @@ public class AccessTokenValidator {
     }
 
     if (claims != null && claims.containsKey(claimName)) {
-        tenant = claims.get(claimName) == null ? null : "" + claims.get(claimName);
-      }
+      claimValue = claims.get(claimName) == null ? null : "" + claims.get(claimName);
+    }
 
-    return tenant;
+    return claimValue;
   }
 
   private JWTClaimsSet validate(final String accessToken, final JWKSet jwkSet) {
     try {
       final JWKSource keySource = new ImmutableJWKSet(jwkSet);
-      final JWSKeySelector keySelector = new JWSVerificationKeySelector(JWSAlgorithm.RS256, keySource);
+      final JWSKeySelector keySelector =
+          new JWSVerificationKeySelector(JWSAlgorithm.RS256, keySource);
 
       JWT_PROCESSOR.setJWSKeySelector(keySelector);
 
